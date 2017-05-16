@@ -238,7 +238,7 @@ fullpacket(LIBSSH2_SESSION * session, int encrypted /* 1 or 0 */ )
     }
 
     if (session->fullpacket_state == libssh2_NB_state_created) {
-        rc = _libssh2_packet_add(session, p->payload,
+        rc = _libssh2_packet_add(session, &p->payload,
                                  session->fullpacket_payload_len,
                                  session->fullpacket_macstate);
         if (rc == LIBSSH2_ERROR_EAGAIN)
