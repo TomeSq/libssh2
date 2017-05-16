@@ -868,12 +868,13 @@ session_free(LIBSSH2_SESSION *session)
         session->free_state = libssh2_NB_state_sent1;
     }
 
-    if (session->state & LIBSSH2_STATE_NEWKEYS) {
-        /* hostkey */
-        if (session->hostkey && session->hostkey->dtor) {
-            session->hostkey->dtor(session, &session->server_hostkey_abstract);
-        }
+    /* hostkey */
+    if (session->hostkey && session->hostkey->dtor) {
+        session->hostkey->dtor(session, &session->server_hostkey_abstract);
+        session->server_hostkey_abstract = NULL;
+    }
 
+    if (session->state & LIBSSH2_STATE_NEWKEYS) {
         /* Client to Server */
         /* crypt */
         if (session->local.crypt && session->local.crypt->dtor) {
