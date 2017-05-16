@@ -99,6 +99,12 @@
     }
 
 
+#define SHA256_CHECK_S_LEN(l, a)                                           \
+    l += a;                                                                \
+    if(l > exchange_state->s_packet_len)                                   \
+        return LIBSSH2_ERROR_KEX_FAILURE;
+
+
 /*
  * diffie_hellman_sha1
  *
@@ -845,6 +851,8 @@ static int diffie_hellman_sha256(LIBSSH2_SESSION *session,
     }
 
     if (exchange_state->state == libssh2_NB_state_sent1) {
+        size_t s_len = 0;
+
         /* Wait for KEX reply */
         rc = _libssh2_packet_require(session, packet_type_reply,
                                      &exchange_state->s_packet,
@@ -858,6 +866,9 @@ static int diffie_hellman_sha256(LIBSSH2_SESSION *session,
                                  "Timed out waiting for KEX reply");
             goto clean_exit;
         }
+
+		/* control s array size */
+		SHA256_CHECK_S_LEN(s_len, 5);
 
         /* Parse KEXDH_REPLY */
         exchange_state->s = exchange_state->s_packet + 1;
@@ -876,6 +887,8 @@ static int diffie_hellman_sha256(LIBSSH2_SESSION *session,
                                  "of the host key");
             goto clean_exit;
         }
+
+        SHA256_CHECK_S_LEN(s_len, session->server_hostkey_len);
         memcpy(session->server_hostkey, exchange_state->s,
                session->server_hostkey_len);
         exchange_state->s += session->server_hostkey_len;
@@ -972,13 +985,16 @@ static int diffie_hellman_sha256(LIBSSH2_SESSION *session,
             goto clean_exit;
         }
 
+        SHA256_CHECK_S_LEN(s_len, 4);
         exchange_state->f_value_len = _libssh2_ntohu32(exchange_state->s);
         exchange_state->s += 4;
         exchange_state->f_value = exchange_state->s;
+        SHA256_CHECK_S_LEN(s_len, exchange_state->f_value_len);
         exchange_state->s += exchange_state->f_value_len;
         _libssh2_bn_from_bin(exchange_state->f, exchange_state->f_value_len,
                              exchange_state->f_value);
 
+        SHA256_CHECK_S_LEN(s_len, 4);
         exchange_state->h_sig_len = _libssh2_ntohu32(exchange_state->s);
         exchange_state->s += 4;
         exchange_state->h_sig = exchange_state->s;
