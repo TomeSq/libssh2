@@ -837,6 +837,7 @@ session_free(LIBSSH2_SESSION *session)
     LIBSSH2_CHANNEL *ch;
     LIBSSH2_LISTENER *l;
     int packets_left = 0;
+    key_exchange_state_low_t *key_state = NULL;
 
     if (session->free_state == libssh2_NB_state_idle) {
         _libssh2_debug(session, LIBSSH2_TRACE_TRANS, "Freeing session resource",
@@ -1065,6 +1066,14 @@ session_free(LIBSSH2_SESSION *session)
     if (session->err_msg && ((session->err_flags & LIBSSH2_ERR_FLAG_DUP) != 0)) {
         LIBSSH2_FREE(session, (char *)session->err_msg);
     }
+
+    /* startup_key_state.key_state_low */
+    key_state = &session->startup_key_state.key_state_low;
+    LIBSSH2_FREE(session, key_state->data);
+    kex_clear_key_exchange_state_low(key_state);
+
+    /* exchange_state */
+    kex_clear_exchange_state(session, &key_state->exchange_state);
 
     LIBSSH2_FREE(session, session);
 

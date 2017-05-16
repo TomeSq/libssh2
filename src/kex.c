@@ -722,30 +722,7 @@ static int diffie_hellman_sha1(LIBSSH2_SESSION *session,
     }
 
   clean_exit:
-    libssh2_dh_dtor(&exchange_state->x);
-    _libssh2_bn_free(exchange_state->e);
-    exchange_state->e = NULL;
-    _libssh2_bn_free(exchange_state->f);
-    exchange_state->f = NULL;
-    _libssh2_bn_free(exchange_state->k);
-    exchange_state->k = NULL;
-    _libssh2_bn_ctx_free(exchange_state->ctx);
-    exchange_state->ctx = NULL;
-
-    if (exchange_state->e_packet) {
-        LIBSSH2_FREE(session, exchange_state->e_packet);
-        exchange_state->e_packet = NULL;
-    }
-
-    if (exchange_state->s_packet) {
-        LIBSSH2_FREE(session, exchange_state->s_packet);
-        exchange_state->s_packet = NULL;
-    }
-
-    if (exchange_state->k_value) {
-        LIBSSH2_FREE(session, exchange_state->k_value);
-        exchange_state->k_value = NULL;
-    }
+    kex_clear_exchange_state(session, exchange_state);
 
     exchange_state->state = libssh2_NB_state_idle;
 
@@ -1377,30 +1354,7 @@ static int diffie_hellman_sha256(LIBSSH2_SESSION *session,
     }
 
   clean_exit:
-    libssh2_dh_dtor(&exchange_state->x);
-    _libssh2_bn_free(exchange_state->e);
-    exchange_state->e = NULL;
-    _libssh2_bn_free(exchange_state->f);
-    exchange_state->f = NULL;
-    _libssh2_bn_free(exchange_state->k);
-    exchange_state->k = NULL;
-    _libssh2_bn_ctx_free(exchange_state->ctx);
-    exchange_state->ctx = NULL;
-
-    if (exchange_state->e_packet) {
-        LIBSSH2_FREE(session, exchange_state->e_packet);
-        exchange_state->e_packet = NULL;
-    }
-
-    if (exchange_state->s_packet) {
-        LIBSSH2_FREE(session, exchange_state->s_packet);
-        exchange_state->s_packet = NULL;
-    }
-
-    if (exchange_state->k_value) {
-        LIBSSH2_FREE(session, exchange_state->k_value);
-        exchange_state->k_value = NULL;
-    }
+    kex_clear_exchange_state(session, exchange_state);
 
     exchange_state->state = libssh2_NB_state_idle;
 
@@ -1459,10 +1413,7 @@ kex_method_diffie_hellman_group1_sha1_key_exchange(LIBSSH2_SESSION *session,
         return ret;
     }
 
-    _libssh2_bn_free(key_state->p);
-    key_state->p = NULL;
-    _libssh2_bn_free(key_state->g);
-    key_state->g = NULL;
+    kex_clear_key_exchange_state_low(key_state);
     key_state->state = libssh2_NB_state_idle;
 
     return ret;
@@ -1536,10 +1487,7 @@ kex_method_diffie_hellman_group14_sha1_key_exchange(LIBSSH2_SESSION *session,
     }
 
     key_state->state = libssh2_NB_state_idle;
-    _libssh2_bn_free(key_state->p);
-    key_state->p = NULL;
-    _libssh2_bn_free(key_state->g);
-    key_state->g = NULL;
+    kex_clear_key_exchange_state_low(key_state);
 
     return ret;
 }
@@ -1636,10 +1584,7 @@ kex_method_diffie_hellman_group_exchange_sha1_key_exchange
 
   dh_gex_clean_exit:
     key_state->state = libssh2_NB_state_idle;
-    _libssh2_bn_free(key_state->g);
-    key_state->g = NULL;
-    _libssh2_bn_free(key_state->p);
-    key_state->p = NULL;
+    kex_clear_key_exchange_state_low(key_state);
 
     return ret;
 }
@@ -1736,10 +1681,7 @@ kex_method_diffie_hellman_group_exchange_sha256_key_exchange
 
   dh_gex_clean_exit:
     key_state->state = libssh2_NB_state_idle;
-    _libssh2_bn_free(key_state->g);
-    key_state->g = NULL;
-    _libssh2_bn_free(key_state->p);
-    key_state->p = NULL;
+    kex_clear_key_exchange_state_low(key_state);
 
     return ret;
 }
@@ -2858,4 +2800,43 @@ LIBSSH2_API int libssh2_session_supported_algs(LIBSSH2_SESSION* session,
     }
 
     return ialg;
+}
+
+
+void
+kex_clear_key_exchange_state_low(key_exchange_state_low_t *key_state)
+{
+    _libssh2_bn_free(key_state->p);
+    key_state->p = NULL;
+    _libssh2_bn_free(key_state->g);
+    key_state->g = NULL;
+}
+
+void
+kex_clear_exchange_state(LIBSSH2_SESSION *session, kmdhgGPshakex_state_t *exchange_state)
+{
+    libssh2_dh_dtor(&exchange_state->x);
+    _libssh2_bn_free(exchange_state->e);
+    exchange_state->e = NULL;
+    _libssh2_bn_free(exchange_state->f);
+    exchange_state->f = NULL;
+    _libssh2_bn_free(exchange_state->k);
+    exchange_state->k = NULL;
+    _libssh2_bn_ctx_free(exchange_state->ctx);
+    exchange_state->ctx = NULL;
+
+    if (exchange_state->e_packet) {
+        LIBSSH2_FREE(session, exchange_state->e_packet);
+        exchange_state->e_packet = NULL;
+    }
+
+    if (exchange_state->s_packet) {
+        LIBSSH2_FREE(session, exchange_state->s_packet);
+        exchange_state->s_packet = NULL;
+    }
+
+    if (exchange_state->k_value) {
+        LIBSSH2_FREE(session, exchange_state->k_value);
+        exchange_state->k_value = NULL;
+    }
 }

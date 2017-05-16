@@ -1060,6 +1060,10 @@ int _libssh2_pem_decode_integer(unsigned char **data, unsigned int *datalen,
 void _libssh2_init_if_needed (void);
 
 
+/* kex.c */
+void kex_clear_key_exchange_state_low(key_exchange_state_low_t *key_state);
+void kex_clear_exchange_state(LIBSSH2_SESSION *session, kmdhgGPshakex_state_t *exchange_state);
+
 #define ARRAY_SIZE(a) (sizeof ((a)) / sizeof ((a)[0]))
 
 /* define to output the libssh2_int64_t type in a *printf() */
