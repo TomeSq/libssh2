@@ -1580,6 +1580,7 @@ kex_method_diffie_hellman_group_exchange_sha1_key_exchange
         }
 
         LIBSSH2_FREE(session, key_state->data);
+        key_state->data = NULL;
     }
 
   dh_gex_clean_exit:
@@ -1677,6 +1678,7 @@ kex_method_diffie_hellman_group_exchange_sha256_key_exchange
         }
 
         LIBSSH2_FREE(session, key_state->data);
+        key_state->data = NULL;
     }
 
   dh_gex_clean_exit:
@@ -2473,6 +2475,7 @@ _libssh2_kex_exchange(LIBSSH2_SESSION * session, int reexchange,
             if (session->hostkey && session->hostkey->dtor) {
                 session->hostkey->dtor(session,
                                        &session->server_hostkey_abstract);
+                session->server_hostkey_abstract = NULL;
             }
             session->hostkey = NULL;
         }
@@ -2541,6 +2544,7 @@ _libssh2_kex_exchange(LIBSSH2_SESSION * session, int reexchange,
                 rc = LIBSSH2_ERROR_KEX_FAILURE;
 
             key_state->state = libssh2_NB_state_sent2;
+            key_state->data = NULL;
         }
     } else {
         key_state->state = libssh2_NB_state_sent2;

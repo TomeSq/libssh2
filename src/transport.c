@@ -141,7 +141,7 @@ decrypt(LIBSSH2_SESSION * session, unsigned char *source,
     while (len >= blocksize) {
         if (session->remote.crypt->crypt(session, source, blocksize,
                                          &session->remote.crypt_abstract)) {
-            LIBSSH2_FREE(session, p->payload);
+            LIBSSH2_SAFE_FREE(session, p->payload);
             return LIBSSH2_ERROR_DECRYPT;
         }
 
@@ -221,7 +221,7 @@ fullpacket(LIBSSH2_SESSION * session, int encrypted /* 1 or 0 */ )
                                               p->payload,
                                               session->fullpacket_payload_len,
                                               &session->remote.comp_abstract);
-            LIBSSH2_FREE(session, p->payload);
+            LIBSSH2_SAFE_FREE(session, p->payload);
             if(rc)
                 return rc;
 
