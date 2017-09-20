@@ -70,7 +70,7 @@ int _libssh2_packet_burn(LIBSSH2_SESSION * session,
                          libssh2_nonblocking_states * state);
 int _libssh2_packet_write(LIBSSH2_SESSION * session, unsigned char *data,
                           unsigned long data_len);
-int _libssh2_packet_add(LIBSSH2_SESSION * session, unsigned char *data,
+int _libssh2_packet_add(LIBSSH2_SESSION * session, unsigned char **data,
                         size_t datalen, int macstate);
 
 #endif /* LIBSSH2_PACKET_H */

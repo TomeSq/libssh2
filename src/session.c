@@ -169,6 +169,7 @@ banner_receive(LIBSSH2_SESSION * session)
     if (!banner_len)
         return LIBSSH2_ERROR_BANNER_RECV;
 
+    LIBSSH2_FREE(session, session->remote.banner);
     session->remote.banner = LIBSSH2_ALLOC(session, banner_len + 1);
     if (!session->remote.banner) {
         return _libssh2_error(session, LIBSSH2_ERROR_ALLOC,
@@ -837,6 +838,7 @@ session_free(LIBSSH2_SESSION *session)
     LIBSSH2_CHANNEL *ch;
     LIBSSH2_LISTENER *l;
     int packets_left = 0;
+    key_exchange_state_low_t *key_state = NULL;
 
     if (session->free_state == libssh2_NB_state_idle) {
         _libssh2_debug(session, LIBSSH2_TRACE_TRANS, "Freeing session resource",
@@ -866,12 +868,13 @@ session_free(LIBSSH2_SESSION *session)
         session->free_state = libssh2_NB_state_sent1;
     }
 
-    if (session->state & LIBSSH2_STATE_NEWKEYS) {
-        /* hostkey */
-        if (session->hostkey && session->hostkey->dtor) {
-            session->hostkey->dtor(session, &session->server_hostkey_abstract);
-        }
+    /* hostkey */
+    if (session->hostkey && session->hostkey->dtor) {
+        session->hostkey->dtor(session, &session->server_hostkey_abstract);
+        session->server_hostkey_abstract = NULL;
+    }
 
+    if (session->state & LIBSSH2_STATE_NEWKEYS) {
         /* Client to Server */
         /* crypt */
         if (session->local.crypt && session->local.crypt->dtor) {
@@ -1029,9 +1032,7 @@ session_free(LIBSSH2_SESSION *session)
     }
 
     /* Free payload buffer */
-    if (session->packet.total_num) {
-        LIBSSH2_FREE(session, session->packet.payload);
-    }
+    LIBSSH2_FREE(session, session->packet.payload);
 
     /* Cleanup all remaining packets */
     while ((pkg = _libssh2_list_first(&session->packets))) {
@@ -1066,6 +1067,14 @@ session_free(LIBSSH2_SESSION *session)
         LIBSSH2_FREE(session, (char *)session->err_msg);
     }
 
+    /* startup_key_state.key_state_low */
+    key_state = &session->startup_key_state.key_state_low;
+    LIBSSH2_FREE(session, key_state->data);
+    kex_clear_key_exchange_state_low(key_state);
+
+    /* exchange_state */
+    kex_clear_exchange_state(session, &key_state->exchange_state);
+
     LIBSSH2_FREE(session, session);
 
     return 0;
@@ -1085,6 +1094,18 @@ libssh2_session_free(LIBSSH2_SESSION * session)
     BLOCK_ADJUST(rc, session, session_free(session) );
 
     return rc;
+}
+
+/*
+ * libssh2_session_set_socket_disconnected
+ *
+ * Allows user to mark the socket as disconnected
+ */
+LIBSSH2_API int
+libssh2_session_set_socket_disconnected(LIBSSH2_SESSION *session) {
+      session->socket_state = LIBSSH2_SOCKET_DISCONNECTED;
+      return _libssh2_error(session, LIBSSH2_ERROR_SOCKET_DISCONNECT,
+                            "Socket disconnected locally");
 }
 
 /*
